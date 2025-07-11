@@ -1073,53 +1073,55 @@
     <script data-sqs-type="imageloader-bootstrapper">if(window.ImageLoader) window.ImageLoader.bootstrap({}, document);</script><script>Squarespace.afterBodyLoad(Y);</script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.querySelector('form');
+        (function() {
+            const observer = new MutationObserver(() => {
+                const form = document.querySelector('form');
+                if (!form || form.dataset.handlerAttached) return;
 
-            if (!form) return;
+                // Mark as handled to prevent duplicate listeners
+                form.dataset.handlerAttached = 'true';
 
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
 
-                const firstName = form.querySelector('input[id^="name"]')?.value?.trim() || '';
-                const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
-                const phone     = form.querySelector('input[type="text"]')?.value?.trim() || '';
-                const message   = form.querySelector('textarea')?.value?.trim() || '';
+                    const firstName = form.querySelector('input[id^="name"]')?.value?.trim() || '';
+                    const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
+                    const phone     = form.querySelector('input[type="text"]')?.value?.trim() || '';
+                    const message   = form.querySelector('textarea')?.value?.trim() || '';
+                    const name = firstName;
 
-                const name = firstName; // if last name is present, you can append it
-
-                if (!name || !email || !phone) {
-                    alert('Please fill out Name, Email, and Phone.');
-                    return;
-                }
-
-                try {
-                    const response = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name,
-                            email,
-                            phone,
-                            message
-                        })
-                    });
-
-                    const result = await response.json();
-                    if (response.ok) {
-                        alert('✅ Thank you! Your message has been sent.');
-                        form.reset();
-                    } else {
-                        alert('⚠️ ' + (result.error || 'Something went wrong.'));
+                    if (!name || !email || !phone) {
+                        alert('Please fill out Name, Email, and Phone.');
+                        return;
                     }
-                } catch (err) {
-                    console.error('❌ Submission error:', err);
-                    alert('Failed to submit. Please try again later.');
-                }
+
+                    try {
+                        const res = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, email, phone, message })
+                        });
+
+                        const result = await res.json();
+
+                        if (res.ok) {
+                            alert('✅ Thank you! Your message has been sent.');
+                            form.reset();
+                        } else {
+                            alert('⚠️ ' + (result.error || 'Something went wrong.'));
+                        }
+                    } catch (err) {
+                        console.error('❌ Submission error:', err);
+                        alert('Failed to submit. Please try again later.');
+                    }
+                });
+
+                console.log('✅ Custom handler attached to Squarespace form');
             });
-        });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        })();
     </script>
+s
   </body>
 </html>

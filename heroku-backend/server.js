@@ -13,7 +13,7 @@ const apiRouter = require('./controllers');
 app.use(cors({
   origin: [
     'http://localhost:63342',
-    'https://www.veteranssupportservices.com'
+    'https://www.vetssupportservices.com'
   ],
   methods: ['GET','POST','OPTIONS'],
   allowedHeaders: ['Content-Type']
