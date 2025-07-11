@@ -1072,6 +1072,7 @@
 
     <script data-sqs-type="imageloader-bootstrapper">if(window.ImageLoader) window.ImageLoader.bootstrap({}, document);</script><script>Squarespace.afterBodyLoad(Y);</script>
     <script>
+        // Disable default Squarespace form handler
         window.Squarespace = window.Squarespace || {};
         Squarespace.forms = Squarespace.forms || {};
         Squarespace.forms.FormSubmit = function () {
@@ -1085,20 +1086,16 @@
                 const form = document.querySelector('form');
                 if (!form || form.dataset.handlerAttached) return;
 
-                // Prevent duplicate listeners
                 form.dataset.handlerAttached = 'true';
 
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
 
-                    const firstName = form.querySelector('input[name*="First"]')?.value?.trim() || '';
-                    const lastName  = form.querySelector('input[name*="Last"]')?.value?.trim() || '';
-                    const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
-                    const phone     = form.querySelector('input[name*="Phone"], input[type="tel"]')?.value?.trim() || '';
-                    const subject   = form.querySelector('input[name*="Subject"]')?.value?.trim() || '';
-                    const message   = form.querySelector('textarea')?.value?.trim() || '';
-
-                    const name = `${firstName} ${lastName}`.trim();
+                    const name    = form.querySelector('input[name*="name"]')?.value?.trim() || '';
+                    const email   = form.querySelector('input[type="email"]')?.value?.trim() || '';
+                    const phone   = form.querySelector('input[type="text"]')?.value?.trim() || '';
+                    const subject = form.querySelector('input[name*="subject"]')?.value?.trim() || '';
+                    const message = form.querySelector('textarea[name*="message"]')?.value?.trim() || '';
 
                     if (!name || !email || !message) {
                         alert('Please fill out Name, Email, and Message.');
@@ -1130,7 +1127,7 @@
                         alert('Failed to submit. Please try again later.');
                     }
 
-                    return false; // stop Squarespace fallback
+                    return false;
                 });
 
                 console.log('✅ Custom handler attached to Squarespace form');
@@ -1139,12 +1136,14 @@
             observer.observe(document.body, { childList: true, subtree: true });
         })();
     </script>
+
     <style>
-        /* Hide Squarespace's default form submission error */
+        /* Hide Squarespace's default error text */
         div[data-form-id] .form-submission-text {
             display: none !important;
         }
     </style>
+
 
 
 
