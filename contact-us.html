@@ -1093,7 +1093,7 @@
                 const firstName = document.querySelector('input[name="fname"]')?.value?.trim() || '';
                 const lastName  = document.querySelector('input[name="lname"]')?.value?.trim() || '';
                 const email     = document.querySelector('input[type="email"]')?.value?.trim() || '';
-                const subject   = document.querySelector('input[type="text"]')?.value?.trim() || '';
+                const subject   = document.querySelector('input[name="subject"]')?.value?.trim() || '';
                 const message   = document.querySelector('textarea')?.value?.trim() || '';
 
                 const name = `${firstName} ${lastName}`.trim();
@@ -1110,9 +1110,8 @@
                         body: JSON.stringify({
                             name,
                             email,
-                            phone: '',
-                            address: '',
-                            message: subject + '\n\n' + message
+                            subject,
+                            message
                         })
                     });
 

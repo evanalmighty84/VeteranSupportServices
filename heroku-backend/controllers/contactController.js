@@ -1,10 +1,8 @@
-// controllers/contactController.js
 require('dotenv').config();
 const sendEmail = require('../utils/sendEmail');
-const twilio    = require('twilio');
-const pool      = require('../db/db');
+const twilio = require('twilio');
+const pool = require('../db/db');
 
-// init Twilio client (make sure you have updated your env vars to TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN)
 const client = twilio(
     process.env.TWILIO_ACCOUNT_SID,
     process.env.TWILIO_AUTH_TOKEN
@@ -12,42 +10,29 @@ const client = twilio(
 
 const businessPhone = '+12145489175';
 const businessEmail = 'evan.ligon@clubhouselinks.com';
-const userId        = 8;
+const userId = 8;
 
 exports.createEmail = async (req, res) => {
-  // now optionally accept smoker + dob
   const {
     name,
     email,
     message = '',
-    phone,
-    address = '',
-    smoker,    // e.g. "Smoker" or "Non-Smoker"
-    dob        // e.g. "1980-05-23"
+    subject = '',
+    smoker,
+    dob
   } = req.body;
 
-  if (!name || !email || !phone) {
-    return res
-        .status(400)
-        .json({ error: 'Name, email, and phone are required.' });
-  }
-
-  // sanitize phone
-  let sanitizedPhone = phone.replace(/\D/g, '');
-  if (sanitizedPhone.length === 10) {
-    sanitizedPhone = '+1' + sanitizedPhone;
-  } else if (!sanitizedPhone.startsWith('+')) {
-    sanitizedPhone = '+' + sanitizedPhone;
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Name and email are required.' });
   }
 
   try {
-    // build email HTML
+    // Email content
     let htmlContent = `
       <h2>New Contact Message</h2>
       <p><strong>Name:</strong> ${name}</p>
       <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Phone:</strong> ${sanitizedPhone}</p>
-      <p><strong>Address:</strong> ${address || 'N/A'}</p>
+      <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
     `;
     if (smoker) {
       htmlContent += `<p><strong>Smoker:</strong> ${smoker}</p>`;
@@ -57,25 +42,16 @@ exports.createEmail = async (req, res) => {
     }
     htmlContent += `<p><strong>Message:</strong><br>${message || 'N/A'}</p>`;
 
-    // send the email
-    const subject = `📬 New Contact Submission from ${name}`;
-    await sendEmail(businessEmail, subject, htmlContent);
+    const emailSubject = `📬 New Contact Submission from ${name}`;
+    await sendEmail(businessEmail, emailSubject, htmlContent);
 
-    // text the customer
-    await client.messages.create({
-      body: `Hi ${name}, thanks for contacting Our Benefit Coach! We’ll reach out shortly.`,
-      messagingServiceSid: process.env.TWILIO_MESSAGING_SID,
-      to: sanitizedPhone
-    });
-
-    // text the business, including optional fields
+    // SMS to business
     let bizBody =
         `📬 New contact from ${name}\n` +
-        `📞 ${sanitizedPhone}\n` +
         `📧 ${email}\n` +
-        `🏠 ${address}\n`;
+        `📝 Subject: ${subject}\n`;
     if (smoker) bizBody += `🚬 Smoker status: ${smoker}\n`;
-    if (dob)     bizBody += `🎂 DOB: ${dob}\n`;
+    if (dob) bizBody += `🎂 DOB: ${dob}\n`;
     bizBody += `📩 ${message}`;
 
     await client.messages.create({
@@ -84,42 +60,34 @@ exports.createEmail = async (req, res) => {
       to: businessPhone
     });
 
-    // upsert subscriber
+    // Upsert by email only
     const existing = await pool.query(
-        `SELECT id FROM subscribers
-         WHERE user_id = $1 AND (email = $2 OR phone_number = $3)`,
-        [userId, email, sanitizedPhone]
+        `SELECT id FROM subscribers WHERE user_id = $1 AND email = $2`,
+        [userId, email]
     );
 
     if (existing.rows.length) {
       await pool.query(
           `UPDATE subscribers
-           SET name = $1,
-               email = $2,
-               phone_number = $3,
-               physical_address = $4,
-               updated_at = NOW()
-         WHERE id = $5`,
-          [name, email, sanitizedPhone, address, existing.rows[0].id]
+         SET name = $1,
+             email = $2,
+             updated_at = NOW()
+         WHERE id = $3`,
+          [name, email, existing.rows[0].id]
       );
-      console.log('🔄 Subscriber updated');
     } else {
       await pool.query(
           `INSERT INTO subscribers
-           (user_id, name, email, phone_number, physical_address, created_at, updated_at)
-         VALUES
-           ($1, $2, $3, $4, $5, NOW(), NOW())`,
-          [userId, name, email, sanitizedPhone, address]
+         (user_id, name, email, created_at, updated_at)
+         VALUES ($1, $2, $3, NOW(), NOW())`,
+          [userId, name, email]
       );
-      console.log('🆕 Subscriber inserted');
     }
 
-    return res
-        .status(200)
-        .json({ success: true, message: 'Contact form processed successfully.' });
-
+    return res.status(200).json({ success: true, message: 'Contact form processed successfully.' });
   } catch (err) {
     console.error('❌ Error in createEmail:', err);
     return res.status(500).json({ error: 'Server error' });
   }
 };
+
