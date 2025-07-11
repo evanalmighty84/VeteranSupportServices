@@ -1085,18 +1085,16 @@
             const observer = new MutationObserver(() => {
                 const form = document.querySelector('form');
                 if (!form || form.dataset.handlerAttached) return;
-
                 form.dataset.handlerAttached = 'true';
 
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
 
-                    const firstName = form.querySelector('input[name*="First"]')?.value?.trim() || '';
-                    const lastName  = form.querySelector('input[name*="Last"]')?.value?.trim() || '';
-                    const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
-                    const phone     = form.querySelector('input[name*="Phone"], input[type="tel"]')?.value?.trim() || '';
-                    const subject   = form.querySelector('input[name*="Subject"]')?.value?.trim() || '';
-                    const message   = form.querySelector('textarea')?.value?.trim() || '';
+                    const firstName = document.querySelector('input[name="fname"]')?.value?.trim() || '';
+                    const lastName  = document.querySelector('input[name="lname"]')?.value?.trim() || '';
+                    const email     = document.querySelector('input[type="email"]')?.value?.trim() || '';
+                    const subject   = document.querySelector('input[type="text"]')?.value?.trim() || '';
+                    const message   = document.querySelector('textarea')?.value?.trim() || '';
 
                     const name = `${firstName} ${lastName}`.trim();
 
@@ -1112,7 +1110,8 @@
                             body: JSON.stringify({
                                 name,
                                 email,
-                                phone,
+                                phone: '', // You can add this if there's a phone field
+                                address: '',
                                 message: subject + '\n\n' + message
                             })
                         });
@@ -1133,12 +1132,13 @@
                     return false;
                 });
 
-                console.log('✅ Custom handler attached to Squarespace form');
+                console.log('✅ Custom contact form handler attached');
             });
 
             observer.observe(document.body, { childList: true, subtree: true });
         })();
     </script>
+
 
     <style>
         /* Hide Squarespace's default error box after submission */
