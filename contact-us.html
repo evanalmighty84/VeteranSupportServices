@@ -1080,33 +1080,41 @@
     </script>
 
     <script>
-        (function() {
+        (function () {
             const observer = new MutationObserver(() => {
                 const form = document.querySelector('form');
                 if (!form || form.dataset.handlerAttached) return;
 
-                // Mark as handled to prevent duplicate listeners
+                // Prevent duplicate listeners
                 form.dataset.handlerAttached = 'true';
 
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
 
-                    const firstName = form.querySelector('input[id^="name"]')?.value?.trim() || '';
+                    const firstName = form.querySelector('input[name*="First"]')?.value?.trim() || '';
+                    const lastName  = form.querySelector('input[name*="Last"]')?.value?.trim() || '';
                     const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
-                    const phone     = form.querySelector('input[type="text"]')?.value?.trim() || '';
+                    const phone     = form.querySelector('input[name*="Phone"], input[type="tel"]')?.value?.trim() || '';
+                    const subject   = form.querySelector('input[name*="Subject"]')?.value?.trim() || '';
                     const message   = form.querySelector('textarea')?.value?.trim() || '';
-                    const name = firstName;
 
-                    if (!name || !email || !phone) {
-                        alert('Please fill out Name, Email, and Phone.');
-                        return;
+                    const name = `${firstName} ${lastName}`.trim();
+
+                    if (!name || !email || !message) {
+                        alert('Please fill out Name, Email, and Message.');
+                        return false;
                     }
 
                     try {
                         const res = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ name, email, phone, message })
+                            body: JSON.stringify({
+                                name,
+                                email,
+                                phone,
+                                message: subject + '\n\n' + message
+                            })
                         });
 
                         const result = await res.json();
@@ -1121,6 +1129,8 @@
                         console.error('❌ Submission error:', err);
                         alert('Failed to submit. Please try again later.');
                     }
+
+                    return false; // stop Squarespace fallback
                 });
 
                 console.log('✅ Custom handler attached to Squarespace form');
@@ -1129,6 +1139,14 @@
             observer.observe(document.body, { childList: true, subtree: true });
         })();
     </script>
-s
+    <style>
+        /* Hide Squarespace's default form submission error */
+        div[data-form-id] .form-submission-text {
+            display: none !important;
+        }
+    </style>
+
+
+
   </body>
 </html>
