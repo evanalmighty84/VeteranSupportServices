@@ -1088,13 +1088,23 @@
             form.dataset.handlerAttached = 'true';
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
-                e.stopImmediatePropagation(); // 👈 IMPORTANT to kill Squarespace's listener
+                e.stopImmediatePropagation(); // 👈 Kills Squarespace's default handler
 
                 const firstName = document.querySelector('input[name="fname"]')?.value?.trim() || '';
                 const lastName  = document.querySelector('input[name="lname"]')?.value?.trim() || '';
                 const email     = document.querySelector('input[type="email"]')?.value?.trim() || '';
-                const subject   = document.querySelector('input[name="subject"]')?.value?.trim() || '';
                 const message   = document.querySelector('textarea')?.value?.trim() || '';
+
+                // 🟨 Dynamically find the Subject input field by its label
+                let subject = '';
+                const labels = document.querySelectorAll('label');
+                labels.forEach(label => {
+                    if (label.textContent.includes('Subject')) {
+                        const inputId = label.getAttribute('for');
+                        const subjectInput = document.getElementById(inputId);
+                        if (subjectInput) subject = subjectInput.value.trim();
+                    }
+                });
 
                 const name = `${firstName} ${lastName}`.trim();
 
@@ -1110,8 +1120,9 @@
                         body: JSON.stringify({
                             name,
                             email,
-                            subject,
-                            message
+                            phone: '',
+                            address: '', // now unused
+                            message: subject + '\n\n' + message
                         })
                     });
 
@@ -1128,12 +1139,13 @@
                     alert('Failed to submit. Please try again later.');
                 }
 
-                return false; // stops fallback
+                return false;
             });
 
             console.log('✅ Custom contact form handler attached');
-        }, 800); // delay to let Squarespace mount its DOM first
+        }, 800);
     </script>
+
 
 
 
