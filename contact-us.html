@@ -1091,11 +1091,14 @@
                 form.addEventListener('submit', async function (e) {
                     e.preventDefault();
 
-                    const name    = form.querySelector('input[name*="name"]')?.value?.trim() || '';
-                    const email   = form.querySelector('input[type="email"]')?.value?.trim() || '';
-                    const phone   = form.querySelector('input[type="text"]')?.value?.trim() || '';
-                    const subject = form.querySelector('input[name*="subject"]')?.value?.trim() || '';
-                    const message = form.querySelector('textarea[name*="message"]')?.value?.trim() || '';
+                    const firstName = form.querySelector('input[name*="First"]')?.value?.trim() || '';
+                    const lastName  = form.querySelector('input[name*="Last"]')?.value?.trim() || '';
+                    const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
+                    const phone     = form.querySelector('input[name*="Phone"], input[type="tel"]')?.value?.trim() || '';
+                    const subject   = form.querySelector('input[name*="Subject"]')?.value?.trim() || '';
+                    const message   = form.querySelector('textarea')?.value?.trim() || '';
+
+                    const name = `${firstName} ${lastName}`.trim();
 
                     if (!name || !email || !message) {
                         alert('Please fill out Name, Email, and Message.');
@@ -1138,7 +1141,7 @@
     </script>
 
     <style>
-        /* Hide Squarespace's default error text */
+        /* Hide Squarespace's default error box after submission */
         div[data-form-id] .form-submission-text {
             display: none !important;
         }
