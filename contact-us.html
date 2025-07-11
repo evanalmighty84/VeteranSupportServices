@@ -1072,6 +1072,54 @@
 
     <script data-sqs-type="imageloader-bootstrapper">if(window.ImageLoader) window.ImageLoader.bootstrap({}, document);</script><script>Squarespace.afterBodyLoad(Y);</script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form');
 
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const firstName = form.querySelector('input[id^="name"]')?.value?.trim() || '';
+                const email     = form.querySelector('input[type="email"]')?.value?.trim() || '';
+                const phone     = form.querySelector('input[type="text"]')?.value?.trim() || '';
+                const message   = form.querySelector('textarea')?.value?.trim() || '';
+
+                const name = firstName; // if last name is present, you can append it
+
+                if (!name || !email || !phone) {
+                    alert('Please fill out Name, Email, and Phone.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            phone,
+                            message
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (response.ok) {
+                        alert('✅ Thank you! Your message has been sent.');
+                        form.reset();
+                    } else {
+                        alert('⚠️ ' + (result.error || 'Something went wrong.'));
+                    }
+                } catch (err) {
+                    console.error('❌ Submission error:', err);
+                    alert('Failed to submit. Please try again later.');
+                }
+            });
+        });
+    </script>
   </body>
 </html>
