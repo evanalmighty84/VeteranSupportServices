@@ -1086,16 +1086,17 @@
             if (!form || form.dataset.handlerAttached) return;
 
             form.dataset.handlerAttached = 'true';
+
             form.addEventListener('submit', async function (e) {
                 e.preventDefault();
-                e.stopImmediatePropagation(); // 👈 Kills Squarespace's default handler
+                e.stopImmediatePropagation();
+                form.setAttribute('data-form-id', ''); // ⛔ disable Squarespace's submission
 
                 const firstName = document.querySelector('input[name="fname"]')?.value?.trim() || '';
                 const lastName  = document.querySelector('input[name="lname"]')?.value?.trim() || '';
                 const email     = document.querySelector('input[type="email"]')?.value?.trim() || '';
                 const message   = document.querySelector('textarea')?.value?.trim() || '';
 
-                // 🟨 Dynamically find the Subject input field by its label
                 let subject = '';
                 const labels = document.querySelectorAll('label');
                 labels.forEach(label => {
@@ -1121,7 +1122,7 @@
                             name,
                             email,
                             phone: '',
-                            address: '', // now unused
+                            address: '', // not used
                             message: subject + '\n\n' + message
                         })
                     });
@@ -1145,6 +1146,7 @@
             console.log('✅ Custom contact form handler attached');
         }, 800);
     </script>
+
 
 
 
