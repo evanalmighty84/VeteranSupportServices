@@ -22,6 +22,7 @@ jobs:
           cp -r *.html *.xml *.txt *.rss deploy || true
           cp -r _downloads.html deploy || true
           cp -r .idea deploy || true
+          cp CNAME deploy || true
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
