@@ -13,11 +13,15 @@ const apiRouter = require('./controllers');
 app.use(cors({
   origin: [
     'http://localhost:63342',
+    'http://vetssupportservices.com',
+    'http://www.vetssupportservices.com',
+    'https://vetssupportservices.com',
     'https://www.vetssupportservices.com'
   ],
-  methods: ['GET','POST','OPTIONS'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type']
 }));
+
 
 // ─── Body parsers ──────────────────────────────────────────────────────────────
 app.use(express.json());                        // for JSON payloads
