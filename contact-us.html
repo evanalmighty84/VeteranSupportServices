@@ -1071,6 +1071,13 @@
     <script src="https://static1.squarespace.com/static/ta/55f0a9b0e4b0f3eb70352f6d/354/scripts/site-bundle.js" type="text/javascript"></script>
 
     <script data-sqs-type="imageloader-bootstrapper">if(window.ImageLoader) window.ImageLoader.bootstrap({}, document);</script><script>Squarespace.afterBodyLoad(Y);</script>
+    <script>
+        window.Squarespace = window.Squarespace || {};
+        Squarespace.forms = Squarespace.forms || {};
+        Squarespace.forms.FormSubmit = function () {
+            console.log('❌ Squarespace default form disabled.');
+        };
+    </script>
 
     <script>
         (function() {
