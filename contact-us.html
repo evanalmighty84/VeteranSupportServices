@@ -1071,79 +1071,97 @@
     <script src="https://static1.squarespace.com/static/ta/55f0a9b0e4b0f3eb70352f6d/354/scripts/site-bundle.js" type="text/javascript"></script>
 
     <script data-sqs-type="imageloader-bootstrapper">if(window.ImageLoader) window.ImageLoader.bootstrap({}, document);</script><script>Squarespace.afterBodyLoad(Y);</script>
+    <!-- 🛑 Disable Squarespace's form logic -->
+    <script>
+        window.Squarespace = window.Squarespace || {};
+        Squarespace.forms = {
+            FormSubmit: function () {
+                console.log('❌ Squarespace form submission disabled.');
+                return false;
+            },
+            initializeForm: function () {
+                console.log('❌ Squarespace form init skipped.');
+            }
+        };
+    </script>
+
+    <!-- ✅ Custom contact form override -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const checkAndAttach = () => {
+            const waitForForm = setInterval(() => {
                 const form = document.querySelector('form');
+                const fname = document.querySelector('input[name="fname"]');
+                const lname = document.querySelector('input[name="lname"]');
+                const email = document.querySelector('input[type="email"]');
+                const message = document.querySelector('textarea');
 
-                if (!form || form.dataset.handlerAttached) return;
-                form.dataset.handlerAttached = 'true';
+                if (form && fname && lname && email && message) {
+                    clearInterval(waitForForm);
 
-                // Block Squarespace logic
-                form.setAttribute('data-form-id', '');
+                    if (form.dataset.handlerAttached) return;
+                    form.dataset.handlerAttached = 'true';
+                    form.setAttribute('data-form-id', '');
 
-                form.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-                    e.stopImmediatePropagation();
+                    form.addEventListener('submit', async function (e) {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
 
-                    const firstName = document.querySelector('input[name="fname"]')?.value.trim() || '';
-                    const lastName  = document.querySelector('input[name="lname"]')?.value.trim() || '';
-                    const email     = document.querySelector('input[type="email"]')?.value.trim() || '';
-                    const message   = document.querySelector('textarea')?.value.trim() || '';
+                        const firstName = fname.value.trim();
+                        const lastName = lname.value.trim();
+                        const emailVal = email.value.trim();
+                        const messageVal = message.value.trim();
 
-                    let subject = '';
-                    const labels = document.querySelectorAll('label');
-                    labels.forEach(label => {
-                        if (label.textContent.includes('Subject')) {
-                            const inputId = label.getAttribute('for');
-                            const subjectInput = document.getElementById(inputId);
-                            if (subjectInput) subject = subjectInput.value.trim();
+                        const name = `${firstName} ${lastName}`.trim();
+                        if (!name || !emailVal || !messageVal) {
+                            alert('Please fill out Name, Email, and Message.');
+                            return;
+                        }
+
+                        try {
+                            const res = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    name,
+                                    email: emailVal,
+                                    phone: '',
+                                    address: '',
+                                    message: messageVal
+                                })
+                            });
+
+                            const result = await res.json();
+
+                            if (res.ok) {
+                                alert('✅ Thank you! Your message has been sent.');
+                                form.reset();
+                            } else {
+                                alert('⚠️ ' + (result.error || 'Something went wrong.'));
+                            }
+                        } catch (err) {
+                            console.error('❌ Submission error:', err);
+                            alert('Failed to submit. Please try again later.');
                         }
                     });
 
-                    const name = `${firstName} ${lastName}`.trim();
-
-                    if (!name || !email || !message) {
-                        alert('Please fill out Name, Email, and Message.');
-                        return false;
-                    }
-
-                    try {
-                        const res = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ name, email, phone: '', address: '', message: `${subject}\n\n${message}` })
-                        });
-
-                        const result = await res.json();
-
-                        if (res.ok) {
-                            alert('✅ Thank you! Your message has been sent.');
-                            form.reset();
-                        } else {
-                            alert('⚠️ ' + (result.error || 'Something went wrong.'));
-                        }
-                    } catch (err) {
-                        console.error('❌ Submission error:', err);
-                        alert('Failed to submit. Please try again later.');
-                    }
-
-                    return false;
-                });
-
-                console.log('✅ Custom contact form handler attached');
-            };
-
-            // Wait until Squarespace loads form completely
-            const interval = setInterval(() => {
-                const formReady = document.querySelector('form input[name="fname"]');
-                if (formReady) {
-                    clearInterval(interval);
-                    checkAndAttach();
+                    console.log('✅ Custom contact form handler attached.');
                 }
             }, 300);
         });
     </script>
+
+    <!-- ✅ Hide Squarespace error box -->
+    <style>
+        .form-field-error,
+        .form-submission-text {
+            display: none !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: hidden !important;
+        }
+    </style>
+
 
 
 
