@@ -1072,92 +1072,79 @@
 
     <script data-sqs-type="imageloader-bootstrapper">if(window.ImageLoader) window.ImageLoader.bootstrap({}, document);</script><script>Squarespace.afterBodyLoad(Y);</script>
     <script>
-        // Disable default Squarespace form handler
-        window.Squarespace = window.Squarespace || {};
-        Squarespace.forms = Squarespace.forms || {};
-        Squarespace.forms.FormSubmit = function () {
-            console.log('❌ Squarespace default form disabled.');
-        };
-    </script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkAndAttach = () => {
+                const form = document.querySelector('form');
 
-    <script>
-        setTimeout(() => {
-            const form = document.querySelector('form');
-            if (!form || form.dataset.handlerAttached) return;
+                if (!form || form.dataset.handlerAttached) return;
+                form.dataset.handlerAttached = 'true';
 
-            // Prevent Squarespace's listener
-            form.setAttribute('data-form-id', '');
-            form.dataset.handlerAttached = 'true';
+                // Block Squarespace logic
+                form.setAttribute('data-form-id', '');
 
-            form.addEventListener('submit', async function (e) {
-                e.preventDefault();
-                e.stopImmediatePropagation(); // 🛑 critical to prevent Squarespace submission
+                form.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
 
-                const firstName = document.querySelector('input[name="fname"]')?.value?.trim() || '';
-                const lastName  = document.querySelector('input[name="lname"]')?.value?.trim() || '';
-                const email     = document.querySelector('input[type="email"]')?.value?.trim() || '';
-                const message   = document.querySelector('textarea')?.value?.trim() || '';
+                    const firstName = document.querySelector('input[name="fname"]')?.value.trim() || '';
+                    const lastName  = document.querySelector('input[name="lname"]')?.value.trim() || '';
+                    const email     = document.querySelector('input[type="email"]')?.value.trim() || '';
+                    const message   = document.querySelector('textarea')?.value.trim() || '';
 
-                // Dynamically grab the Subject field
-                let subject = '';
-                const labels = document.querySelectorAll('label');
-                labels.forEach(label => {
-                    if (label.textContent.includes('Subject')) {
-                        const inputId = label.getAttribute('for');
-                        const subjectInput = document.getElementById(inputId);
-                        if (subjectInput) subject = subjectInput.value.trim();
-                    }
-                });
-
-                const name = `${firstName} ${lastName}`.trim();
-
-                if (!name || !email || !message) {
-                    alert('Please fill out Name, Email, and Message.');
-                    return false;
-                }
-
-                try {
-                    const res = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name,
-                            email,
-                            phone: '',
-                            address: '',
-                            message: subject + '\n\n' + message
-                        })
+                    let subject = '';
+                    const labels = document.querySelectorAll('label');
+                    labels.forEach(label => {
+                        if (label.textContent.includes('Subject')) {
+                            const inputId = label.getAttribute('for');
+                            const subjectInput = document.getElementById(inputId);
+                            if (subjectInput) subject = subjectInput.value.trim();
+                        }
                     });
 
-                    const result = await res.json();
+                    const name = `${firstName} ${lastName}`.trim();
 
-                    if (res.ok) {
-                        alert('✅ Thank you! Your message has been sent.');
-                        form.reset();
-                    } else {
-                        alert('⚠️ ' + (result.error || 'Something went wrong.'));
+                    if (!name || !email || !message) {
+                        alert('Please fill out Name, Email, and Message.');
+                        return false;
                     }
-                } catch (err) {
-                    console.error('❌ Submission error:', err);
-                    alert('Failed to submit. Please try again later.');
+
+                    try {
+                        const res = await fetch('https://veterans-support-services-a6f7eee820c0.herokuapp.com/api/contactus', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, email, phone: '', address: '', message: `${subject}\n\n${message}` })
+                        });
+
+                        const result = await res.json();
+
+                        if (res.ok) {
+                            alert('✅ Thank you! Your message has been sent.');
+                            form.reset();
+                        } else {
+                            alert('⚠️ ' + (result.error || 'Something went wrong.'));
+                        }
+                    } catch (err) {
+                        console.error('❌ Submission error:', err);
+                        alert('Failed to submit. Please try again later.');
+                    }
+
+                    return false;
+                });
+
+                console.log('✅ Custom contact form handler attached');
+            };
+
+            // Wait until Squarespace loads form completely
+            const interval = setInterval(() => {
+                const formReady = document.querySelector('form input[name="fname"]');
+                if (formReady) {
+                    clearInterval(interval);
+                    checkAndAttach();
                 }
-
-                return false;
-            });
-
-            console.log('✅ Custom contact form handler attached');
-        }, 800);
+            }, 300);
+        });
     </script>
 
-
-
-
-    <style>
-        /* Hide Squarespace's default error box after submission */
-        div[data-form-id] .form-submission-text {
-            display: none !important;
-        }
-    </style>
 
 
 

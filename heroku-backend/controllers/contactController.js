@@ -9,7 +9,7 @@ const client = twilio(
 );
 
 const businessPhone = '+12145489175';
-const businessEmail = 'evan.ligon@clubhouselinks.com';
+const businessEmail = 'office@vetssupportservices.com';
 const userId = 8;
 
 exports.createEmail = async (req, res) => {
@@ -34,33 +34,34 @@ exports.createEmail = async (req, res) => {
       <p><strong>Email:</strong> ${email}</p>
       <p><strong>Subject:</strong> ${subject || 'N/A'}</p>
     `;
-    if (smoker) {
-      htmlContent += `<p><strong>Smoker:</strong> ${smoker}</p>`;
-    }
-    if (dob) {
-      htmlContent += `<p><strong>Date of Birth:</strong> ${dob}</p>`;
-    }
+    if (smoker) htmlContent += `<p><strong>Smoker:</strong> ${smoker}</p>`;
+    if (dob) htmlContent += `<p><strong>Date of Birth:</strong> ${dob}</p>`;
     htmlContent += `<p><strong>Message:</strong><br>${message || 'N/A'}</p>`;
 
     const emailSubject = `📬 New Contact Submission from ${name}`;
     await sendEmail(businessEmail, emailSubject, htmlContent);
 
-    // SMS to business
-    let bizBody =
-        `📬 New contact from ${name}\n` +
-        `📧 ${email}\n` +
-        `📝 Subject: ${subject}\n`;
-    if (smoker) bizBody += `🚬 Smoker status: ${smoker}\n`;
-    if (dob) bizBody += `🎂 DOB: ${dob}\n`;
-    bizBody += `📩 ${message}`;
+    // SMS to business — safely attempt
+    try {
+      let bizBody =
+          `📬 New contact from ${name}\n` +
+          `📧 ${email}\n` +
+          `📝 Subject: ${subject}\n`;
+      if (smoker) bizBody += `🚬 Smoker status: ${smoker}\n`;
+      if (dob) bizBody += `🎂 DOB: ${dob}\n`;
+      bizBody += `📩 ${message}`;
 
-    await client.messages.create({
-      body: bizBody,
-      messagingServiceSid: process.env.TWILIO_MESSAGING_SID,
-      to: businessPhone
-    });
+      await client.messages.create({
+        body: bizBody,
+        messagingServiceSid: process.env.TWILIO_MESSAGING_SID,
+        to: businessPhone
+      });
 
-    // Upsert by email only
+    } catch (twilioErr) {
+      console.warn('⚠️ Twilio SMS failed (non-blocking):', twilioErr.message);
+    }
+
+    // Upsert by email
     const existing = await pool.query(
         `SELECT id FROM subscribers WHERE user_id = $1 AND email = $2`,
         [userId, email]
@@ -85,9 +86,9 @@ exports.createEmail = async (req, res) => {
     }
 
     return res.status(200).json({ success: true, message: 'Contact form processed successfully.' });
+
   } catch (err) {
     console.error('❌ Error in createEmail:', err);
     return res.status(500).json({ error: 'Server error' });
   }
 };
-
